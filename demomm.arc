@@ -66,3 +66,27 @@
 
 ;; (def sublis (al tree)
 ;;   (treewise cons [aif (assoc _ al) (cdr it) _] tree))
+
+;; (def subst-base (atom)
+;;   (when atom
+;;     (
+
+(def gtree (tree)
+  (withs (h (table)
+          base (fn (atom)
+                 (when atom
+                   (w/uniq g
+                     (push g (h atom))
+                     g))))
+    (list h (treewise cons base tree))))
+
+;; (mac mlet (var val . body)
+;;   (let (h gvar) (gtree var)
+;;        (each (k v) h
+;;          (when (no (is ,@v))
+;;            `(err (+ "different values for " ,k))))
+;;        `
+;;        (withs (,@(each (k v) h
+;;                     k
+;;                     (car v)
+          
