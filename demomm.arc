@@ -71,14 +71,33 @@
 ;;   (when atom
 ;;     (
 
-(def gtree (tree)
-  (withs (h (table)
-          base (fn (atom)
+(mac pushal (x al key)
+  `(aif (assoc ,key , al)
+         (push ,x (cdr it))
+         (push (list ,key ,x) ,al)))
+
+
+
+; this worked with a hash table
+;; (def gtree (tree)
+;;   (withs (al nil
+;;           base (fn (atom)
+;;                  (when atom
+;;                    (w/uniq g
+;;                      (pushal g al atom)
+;;                      g))))
+;;     (list al (treewise cons base tree))))
+
+(mac gtree (tree)
+  `(withs (al nil
+           base (fn (atom)
                  (when atom
                    (w/uniq g
-                     (push g (h atom))
+                     (pushal g al atom)
                      g))))
-    (list h (treewise cons base tree))))
+     (list al (treewise cons base ,tree))))
+
+
 
 ;; (mac mlet (var val . body)
 ;;   (let (h gvar) (gtree var)
