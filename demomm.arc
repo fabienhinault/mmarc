@@ -15,7 +15,7 @@
      (= (,name 'verify)
         (fn (stack)
           (push stack '(,ct ,var))))
-     (= (f* ,var) ,name)))
+     (= (f* ',var) ,name)))
 
 (def vars (statement)
   (dedup (keep [find _ v*] (flat statement))))
@@ -75,9 +75,6 @@
   `(aif (assoc ,key , al)
          (push ,x (cdr it))
          (push (list ,key ,x) ,al)))
-
-
-
 ; this worked with a hash table
 ;; (def gtree (tree)
 ;;   (withs (al nil
@@ -94,18 +91,24 @@
                  (when atom
                    (w/uniq g
                      (pushal g al atom)
-                     g))))
-     (list al (treewise cons base ,tree))))
+                     g)))
+           restree (treewise cons base ,tree))
+     (list al restree)))
+
+;(gtree '(TT (-> (= u (+ u 0)) (= u u))))
 
 
+;; val  '((TT (= u (+ u 0)))
+;;        (TT (-> (= u (+ u 0)) (= u u))))
 
-;; (mac mlet (var val . body)
-;;   (let (h gvar) (gtree var)
-;;        (each (k v) h
-;;          (when (no (is ,@v))
-;;            `(err (+ "different values for " ,k))))
-;;        `
-;;        (withs (,@(each (k v) h
-;;                     k
-;;                     (car v)
-          
+
+(mac mlet (var val . body)
+  (let (al gvar) (gtree var)
+    `(let ,gvar ,val
+       (each (k . vs) ,al
+         (when (no (apply is vs))
+           (err (+ "different values for " k))))
+       (withs ,(each (k . vs) al
+                    k
+                    (car vs))
+         ,@body))))
