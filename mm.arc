@@ -143,16 +143,6 @@
                 (all2sets d))))
         ds)))
 
-
-(mac check-ds (ds)
-  ds)
-
-(def check-ds (ds)
-  (each d ds
-    (each d2 (all2sets d)
-      (pr d2))))
-
-
 (mac $a (name es ds ccl)
   (w/uniq rest
     (let hyps (+ (getfs (list es ccl)) es)
@@ -165,7 +155,7 @@
                   `(w/cs
                      (mlet (,@(rev hyps) . ,rest) stack
                         (check-cs)
-                        (check-ds)
+                        (check-ds ,ds)
                         (cons ,(mbind ccl) ,rest)))
                   `(cons ',ccl stack))))))))
 
