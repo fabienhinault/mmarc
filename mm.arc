@@ -70,6 +70,8 @@
            (apply ison (map car xs))
            (apply ison (map cdr xs)))))
 
+
+
 (mac mlet (var val . body)
   (let (al gvar) (gtree var)
     `(let ,gvar ,val
@@ -143,9 +145,14 @@
                 (all2sets d))))
         ds)))
 
+(def evenths (l)
+  (if (no l) nil
+      (no (cdr l)) nil
+      (cons (cadr l) (evenths (cddr l)))))
+
 (mac $a (name es ds ccl)
   (w/uniq rest
-    (let hyps (+ (getfs (list es ccl)) es)
+    (let hyps (+ (getfs (list (evenths es) ccl)) (evenths es))
       (check-d-vars ds)
       `(do
          (= ,name (table))
@@ -159,18 +166,39 @@
                         (cons ,(mbind ccl) ,rest)))
                   `(cons ',ccl stack))))))))
 
+
+(mac w/es (es . body)
+  (if (no es)
+      `(do ,@body)
+      `(let ,(car es) (table)
+         (= (,(car es) 'step)
+            (fn (stack)
+              (cons ',(cadr es) stack)))
+         (w/es ,(cddr es) ,@body))))
+
+
 (mac $p (name es ds ccl proof)
   `(do
      ($a ,name ,es ,ds ,ccl)
-     (= (,name 'verify)
-        (fn ()
-          (let stack nil
-            ,@(map 
-               (fn (s)
-                 `(= stack ((,s 'step) stack)))
-               proof)
-            (if (no (iso stack '(,ccl)))
-                (err "MM verify: " ',name stack)))))
+     (w/es ,es
+           (= (,name 'verify)
+              (fn ()
+                (let stack nil
+                  ,@(map 
+                      (fn (s)
+                        `(= stack ((,s 'step) stack)))
+                      proof)
+                  (if (no (iso stack '(,ccl)))
+                      (err "MM verify: " ',name stack)))))
+           (= (,name 'debug)
+              (fn ()
+                (let stack nil
+                  ,@(map 
+                      (fn (s)
+                        `(do (ppr ',s)
+                             (= stack ((,s 'step) stack))
+                             (ppr stack)))
+                      proof)))))
      (= (p* ,name) ,name)))
 
 (def verify-all ()
