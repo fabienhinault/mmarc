@@ -14,7 +14,7 @@
      (= ,name (table))
      (= (,name 'statement) '(,ct ,var))
      (= (,name 'step)
-        (fn (stack)
+        (fn (stack pds)
           (cons '(,ct ,var) stack)))
      (= (f* ',var) ,name)))
 
@@ -122,7 +122,7 @@
       (no (cdr l)) nil
       (+ (tense-1n (car l) (cdr l)) (all2sets (cdr l)))))
 
-(mac check-ds (ds)
+(mac check-ds (ds pds)
   `(do
      ,@(map
         (fn (d)
@@ -139,7 +139,7 @@
                          (withs (va (car vab)
                                  vb (cadr vab))
                            (unless (some [find vb _] (keep [find va _] 
-                                                           ',ds))
+                                                           ,pds))
                              (err "MM check-ds no d for " 
                                   va vb 'in ',a ',b)))))))
                 (all2sets d))))
@@ -157,12 +157,12 @@
       `(do
          (= ,name (table))
          (= (,name 'step)
-            (fn (stack)
+            (fn (stack pds)
               ,(if hyps
                   `(w/cs
                      (mlet (,@(rev hyps) . ,rest) stack
                         (check-cs)
-                        (check-ds ,ds)
+                        (check-ds ,ds pds)
                         (cons ,(mbind ccl) ,rest)))
                   `(cons ',ccl stack))))))))
 
@@ -172,7 +172,7 @@
       `(do ,@body)
       `(let ,(car es) (table)
          (= (,(car es) 'step)
-            (fn (stack)
+            (fn (stack pds)
               (cons ',(cadr es) stack)))
          (w/es ,(cddr es) ,@body))))
 
@@ -186,7 +186,7 @@
                 (let stack nil
                   ,@(map 
                       (fn (s)
-                        `(= stack ((,s 'step) stack)))
+                        `(= stack ((,s 'step) stack ',ds)))
                       proof)
                   (if (no (iso stack '(,ccl)))
                       (err "MM verify: " ',name stack)))))
@@ -196,7 +196,7 @@
                   ,@(map 
                       (fn (s)
                         `(do (ppr ',s)
-                             (= stack ((,s 'step) stack))
+                             (= stack ((,s 'step) stack ',ds))
                              (ppr stack)))
                       proof)))))
      (= (p* ,name) ,name)))
