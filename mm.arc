@@ -1,6 +1,6 @@
 (= c* nil)
 (= v* nil)
-(= f* (table))
+(= f* nil)
 (= p* (table))
 
 (mac $c cts
@@ -10,22 +10,22 @@
   `(++ v* ',vars))
 
 (mac $f (name ct var)
-  `(do
-     (= ,name (table))
-     (= (,name 'statement) '(,ct ,var))
-     (= (,name 'step)
-        (fn (stack pds)
-          (cons '(,ct ,var) stack)))
-     (= (f* ',var) ,name)))
+  `(= ,name (create-f ',ct ',var)))
+
+(def create-f (ct var)
+  (let res (table)
+    (= (res 'statement) (list ct var))
+    (= (res 'step)
+       (fn (stack pds)
+         (cons (list ct var) stack)))
+    (++ f* (list (cons var res)))
+    res))
 
 (def vars (x)
   (dedup (keep [find _ v*] (flat x))))
 
-(def getfs (ccl)
-  (map [(f* _) 'statement] (vars ccl)))
-
-
-
+(def getfs (x)
+  (map [(cdr _) 'statement] (keep [some (car _) (vars x)] f*)))
 
 (mac w/cs body
   `(withs ,(mappend
@@ -39,7 +39,6 @@
      ,@(map
         (fn (c) `(when (no (is ,c ',c)) (err "checks: mismatch " ,c ',c)))
         c*)))
-
 
 ;must be a macro, because it uses push
 (mac pushal (x al key)
@@ -70,8 +69,6 @@
            (apply ison (map car xs))
            (apply ison (map cdr xs)))))
 
-
-
 (mac mlet (var val . body)
   (let (al gvar) (gtree var)
     `(let ,gvar ,val
@@ -86,19 +83,6 @@
                  [list (car _) (cadr _)]
                  al)
          ,@body))))
-
-;; (mlet ((wff P)
-;;        (wff Q)
-;;        (wff (-> P Q))
-;;        (TT P)
-;;        (TT (-> P Q))
-;;        . rest)
-;;       '((wff (= u (+ u 0))) 
-;;         (wff (= u u)) 
-;;         (wff (-> (= u (+ u 0)) (= u u)))
-;;         (TT (= u (+ u 0)))
-;;         (TT (-> (= u (+ u 0)) (= u u)))) 
-;;       (pr P Q))
 
 (def mbind (l)
   (if (no l) nil
@@ -130,20 +114,23 @@
              ,@(map
                 (fn (d2)
                   (withs (a (car d2)
-                            b (cadr d2))
-                    `(withs (varsa (vars ,a)
-                             varsb (vars ,b))
-                       (awhen (some [find _ varsa] varsb)
-                         (err "MM check-ds common var" it ',a ',b))
-                       (each vab (tense-nn varsa varsb)
-                         (withs (va (car vab)
-                                 vb (cadr vab))
-                           (unless (some [find vb _] (keep [find va _] 
-                                                           ,pds))
-                             (err "MM check-ds no d for " 
-                                  va vb 'in ',a ',b)))))))
+                          b (cadr d2))
+                    `(check-d2 ,a ,b ',a ',b ,pds)))
                 (all2sets d))))
         ds)))
+
+(def check-d2 (a bb name-a name-b pds)
+  (withs (varsa (vars a)
+          varsb (vars bb))
+    (awhen (some [find _ varsa] varsb)
+      (err "MM check-ds common var" it name-a name-b))
+    (each vab (tense-nn varsa varsb)
+      (withs (va (car vab)
+              vb (cadr vab))
+        (unless (some [find vb _] (keep [find va _] pds))
+          (err "MM check-ds no d for " va vb 'in name-a name-b))))))
+
+
 
 (def evenths (l)
   (if (no l) nil

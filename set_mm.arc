@@ -171,7 +171,7 @@
 ($a ax-14 nil nil (TT (-> (= x y) (-> (ee z x) (ee z y)))))
 
 ; L 12583
-($a ax-17 nil ((x ph)) (-> ph (AA x ph)))
+($a ax-17 nil ((x ph)) (TT (-> ph (AA x ph))))
 
 ; L 12656
 ($a ax-4 nil nil (TT (-> (AA x ph) ph)))
