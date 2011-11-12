@@ -186,7 +186,7 @@
                              (= stack ((,s 'step) stack ',ds))
                              (ppr stack)))
                       proof)))))
-     (= (p* ,name) ,name)))
+     (= (p* ',name) ,name)))
 
 (def verify-all ()
-  (each p p* (p 'verify)))
+  (each (n p) p* ((p 'verify))))
